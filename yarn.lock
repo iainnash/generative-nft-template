@@ -526,6 +526,11 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts-upgradeable/-/contracts-upgradeable-4.3.2.tgz#92df481362e366c388fc02133cf793029c744cea"
   integrity sha512-i/pOaOtcqDk4UqsrOv735uYyTbn6dvfiuVu5hstsgV6c4ZKUtu88/31zT2BzkCg+3JfcwOfgg2TtRKVKKZIGkQ==
 
+"@openzeppelin/contracts@^4.4.1":
+  version "4.4.1"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.4.1.tgz#3382db2cd83ab565ed9626765e7da92944b45de8"
+  integrity sha512-o+pHCf/yMLSlV5MkDQEzEQL402i6SoRnktru+0rdSxVEFZcTzzGhZCAtZjUFyKGazMSv1TilzMg+RbED1N8XHQ==
+
 "@resolver-engine/core@^0.3.3":
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/@resolver-engine/core/-/core-0.3.3.tgz#590f77d85d45bc7ecc4e06c654f41345db6ca967"
@@ -896,6 +901,15 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@yarnpkg/lockfile/-/lockfile-1.1.0.tgz#e77a97fbd345b76d83245edcd17d393b1b41fb31"
   integrity sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==
+
+"@zoralabs/nft-editions-contracts@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@zoralabs/nft-editions-contracts/-/nft-editions-contracts-1.0.2.tgz#edc6b49baa2382ce02a80d1759261b6d6a562ecc"
+  integrity sha512-k7gfuAYvmhDtMV9YCrxNRNtNFBQNrsZpIBoziNJbD7uFX85sCKq1hwEvW7ZZVqupQxPkO6x8UKneXjy580ss6Q==
+  dependencies:
+    "@openzeppelin/contracts-upgradeable" "^4.3.2"
+    base64-sol "^1.0.1"
+    ethers "^5.4.1"
 
 abab@^2.0.3:
   version "2.0.5"
@@ -4045,6 +4059,13 @@ growl@1.10.5:
   version "1.10.5"
   resolved "https://registry.yarnpkg.com/growl/-/growl-1.10.5.tgz#f2735dc2283674fa67478b10181059355c369e5e"
   integrity sha512-qBr4OuELkhPenW6goKVXiv47US3clb3/IbuWF9KNKEijAy9oeHxU9IgzjvJhHkUzhaj7rOUD7+YGWqUjLp5oSA==
+
+gwei-slim-nft-contracts@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/gwei-slim-nft-contracts/-/gwei-slim-nft-contracts-1.0.3.tgz#ff0ef23afb52a9121f5f42bea57a3c841ddecca3"
+  integrity sha512-FbUz95/EL80TOhhceenOrvgC7vMk2c72lGnZRLHBmVhGV2NaPrHO5ZiwLSoKzOev1fMZJ8KKVwKanMW5XAHx+w==
+  dependencies:
+    "@openzeppelin/contracts-upgradeable" "^4.3.2"
 
 har-schema@^2.0.0:
   version "2.0.0"

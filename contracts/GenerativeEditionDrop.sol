@@ -1,62 +1,48 @@
 // SPDX-License-Identifier: GPL-3.0
 
 /**
-
-█▄░█ █▀▀ ▀█▀   █▀▀ █▀▄ █ ▀█▀ █ █▀█ █▄░█ █▀
-█░▀█ █▀░ ░█░   ██▄ █▄▀ █ ░█░ █ █▄█ █░▀█ ▄█
-
-▀█ █▀█ █▀█ ▄▀█
-█▄ █▄█ █▀▄ █▀█
-
+  Generative Edition Drop
  */
 
-pragma solidity 0.8.6;
+pragma solidity 0.8.9;
 
-import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import {IERC2981Upgradeable, IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC2981} from "@openzeppelin/contracts/interfaces/IERC2981.sol";
+import {IBaseERC721Interface, ConfigSettings} from "gwei-slim-nft-contracts/contracts/base/ERC721Base.sol";
+import {ERC721Delegated} from "gwei-slim-nft-contracts/contracts/base/ERC721Delegated.sol";
 
-import {SharedNFTLogic} from "./SharedNFTLogic.sol";
-import {IEditionSingleMintable} from "./IEditionSingleMintable.sol";
+import {SharedNFTLogic} from "@zoralabs/nft-editions-contracts/contracts/SharedNFTLogic.sol";
+import {IEditionSingleMintable} from "@zoralabs/nft-editions-contracts/contracts/IEditionSingleMintable.sol";
 
 /**
-    This is a smart contract for handling dynamic contract minting.
-
-    @dev This allows creators to mint a unique serial edition of the same media within a custom contract
-    @author iain nash
-    Repository: https://github.com/ourzora/nft-editions
 */
-contract SingleEditionMintable is
-    ERC721Upgradeable,
-    IEditionSingleMintable,
-    IERC2981Upgradeable,
-    OwnableUpgradeable
+contract OnChainGenerativeEditionDrop is
+    ERC721Delegated, IEditionSingleMintable
 {
-    using CountersUpgradeable for CountersUpgradeable.Counter;
+    using Counters for Counters.Counter;
     event PriceChanged(uint256 amount);
     event EditionSold(uint256 price, address owner);
 
-    // metadata
-    string public description;
+    string private constant name = "";
+    string private constant symbol = "";
+    string private constant description = "";
+    uint16 private constant royaltyBPS = 1000;
+    string private constant imageRendererBase = "https://gendrop0.iain.in/preview/";
 
     // Media Urls
     // animation_url field in the metadata
     string private animationUrl;
-    // Hash for the associated animation
-    bytes32 private animationHash;
+
     // Image in the metadata
-    string private imageUrl;
-    // Hash for the associated image
-    bytes32 private imageHash;
 
     // Total size of edition that can be minted
-    uint256 public editionSize;
+    uint256 public dropSize;
+
     // Current token id minted
-    CountersUpgradeable.Counter private atEditionId;
-    // Royalty amount in bps
-    uint256 royaltyBPS;
+    Counters.Counter private atEditionId;
+
     // Addresses allowed to mint edition
     mapping(address => bool) allowedMinters;
 
@@ -67,52 +53,21 @@ contract SingleEditionMintable is
     SharedNFTLogic private immutable sharedNFTLogic;
 
     // Global constructor for factory
-    constructor(SharedNFTLogic _sharedNFTLogic) {
+    constructor(address baseNFTContract, SharedNFTLogic _sharedNFTLogic, uint256 _dropSize) ERC721Delegated(
+        baseNFTContract,
+        name,
+        symbol,
+        ConfigSettings({
+            royaltyBps: royaltyBPS,
+            // this is only for the preview image renderign
+            uriBase: imageRendererBase,
+            uriExtension: "",
+            hasTransferHook: false
+        })
+    ) {
         sharedNFTLogic = _sharedNFTLogic;
+        dropSize = _dropSize;
     }
-
-    /**
-      @param _owner User that owns and can mint the edition, gets royalty and sales payouts and can update the base url if needed.
-      @param _name Name of edition, used in the title as "$NAME NUMBER/TOTAL"
-      @param _symbol Symbol of the new token contract
-      @param _description Description of edition, used in the description field of the NFT
-      @param _imageUrl Image URL of the edition. Strongly encouraged to be used, if necessary, only animation URL can be used. One of animation and image url need to exist in a edition to render the NFT.
-      @param _imageHash SHA256 of the given image in bytes32 format (0xHASH). If no image is included, the hash can be zero.
-      @param _animationUrl Animation URL of the edition. Not required, but if omitted image URL needs to be included. This follows the opensea spec for NFTs
-      @param _animationHash The associated hash of the animation in sha-256 bytes32 format. If animation is omitted the hash can be zero.
-      @param _editionSize Number of editions that can be minted in total. If 0, unlimited editions can be minted.
-      @param _royaltyBPS BPS of the royalty set on the contract. Can be 0 for no royalty.
-      @dev Function to create a new edition. Can only be called by the allowed creator
-           Sets the only allowed minter to the address that creates/owns the edition.
-           This can be re-assigned or updated later
-     */
-    function initialize(
-        address _owner,
-        string memory _name,
-        string memory _symbol,
-        string memory _description,
-        string memory _animationUrl,
-        bytes32 _animationHash,
-        string memory _imageUrl,
-        bytes32 _imageHash,
-        uint256 _editionSize,
-        uint256 _royaltyBPS
-    ) public initializer {
-        __ERC721_init(_name, _symbol);
-        __Ownable_init();
-        // Set ownership to original sender of contract call
-        transferOwnership(_owner);
-        description = _description;
-        animationUrl = _animationUrl;
-        animationHash = _animationHash;
-        imageUrl = _imageUrl;
-        imageHash = _imageHash;
-        editionSize = _editionSize;
-        royaltyBPS = _royaltyBPS;
-        // Set edition id start to be 1 not 0
-        atEditionId.increment();
-    }
-
 
     /// @dev returns the number of minted tokens within the edition
     function totalSupply() public view returns (uint256) {
@@ -153,7 +108,7 @@ contract SingleEditionMintable is
      */
     function withdraw() external onlyOwner {
         // No need for gas limit to trusted address.
-        AddressUpgradeable.sendValue(payable(owner()), address(this).balance);
+        Address.sendValue(payable(owner()), address(this).balance);
     }
 
     /**
@@ -161,12 +116,15 @@ contract SingleEditionMintable is
             given edition id.
      */
     function _isAllowedToMint() internal view returns (bool) {
+        // If the owner attempts to mint
         if (owner() == msg.sender) {
             return true;
         }
+        // Anyone is allowed to mint
         if (allowedMinters[address(0x0)]) {
             return true;
         }
+        // Otherwise use the allowed minter check
         return allowedMinters[msg.sender];
     }
 
@@ -200,10 +158,10 @@ contract SingleEditionMintable is
     function owner()
         public
         view
-        override(OwnableUpgradeable, IEditionSingleMintable)
+        override(IEditionSingleMintable)
         returns (address)
     {
-        return super.owner();
+        return ERC721Delegated._owner();
     }
 
     /**
@@ -223,22 +181,20 @@ contract SingleEditionMintable is
       @dev Allows for updates of edition urls by the owner of the edition.
            Only URLs can be updated (data-uris are supported), hashes cannot be updated.
      */
-    function updateEditionURLs(
-        string memory _imageUrl,
-        string memory _animationUrl
+    function updateBasePreviewURL(
+        string memory _basePreviewUrl
     ) public onlyOwner {
-        imageUrl = _imageUrl;
-        animationUrl = _animationUrl;
+        _setBaseURI(_basePreviewUrl, "");
     }
 
     /// Returns the number of editions allowed to mint (max_uint256 when open edition)
     function numberCanMint() public view override returns (uint256) {
         // Return max int if open edition
-        if (editionSize == 0) {
+        if (dropSize == 0) {
             return type(uint256).max;
         }
         // atEditionId is one-indexed hence the need to remove one here
-        return editionSize + 1 - atEditionId.current();
+        return dropSize + 1 - atEditionId.current();
     }
 
     /**
@@ -246,7 +202,7 @@ contract SingleEditionMintable is
         User burn function for token id 
      */
     function burn(uint256 tokenId) public {
-        require(_isApprovedOrOwner(_msgSender(), tokenId), "Not approved");
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Not approved");
         _burn(tokenId);
     }
 
@@ -260,7 +216,7 @@ contract SingleEditionMintable is
     {
         uint256 startAt = atEditionId.current();
         uint256 endAt = startAt + recipients.length - 1;
-        require(editionSize == 0 || endAt <= editionSize, "Sold out");
+        require(dropSize == 0 || endAt <= dropSize, "Sold out");
         while (atEditionId.current() <= endAt) {
             _mint(
                 recipients[atEditionId.current() - startAt],
@@ -272,39 +228,6 @@ contract SingleEditionMintable is
     }
 
     /**
-      @dev Get URIs for edition NFT
-      @return imageUrl, imageHash, animationUrl, animationHash
-     */
-    function getURIs()
-        public
-        view
-        returns (
-            string memory,
-            bytes32,
-            string memory,
-            bytes32
-        )
-    {
-        return (imageUrl, imageHash, animationUrl, animationHash);
-    }
-
-    /**
-        @dev Get royalty information for token
-        @param _salePrice Sale price for the token
-     */
-    function royaltyInfo(uint256, uint256 _salePrice)
-        external
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        if (owner() == address(0x0)) {
-            return (owner(), 0);
-        }
-        return (owner(), (_salePrice * royaltyBPS) / 10_000);
-    }
-
-    /**
         @dev Get URI for given token id
         @param tokenId token id to get uri for
         @return base64-encoded json metadata object
@@ -312,30 +235,29 @@ contract SingleEditionMintable is
     function tokenURI(uint256 tokenId)
         public
         view
-        override
         returns (string memory)
     {
         require(_exists(tokenId), "No token");
 
         return
             sharedNFTLogic.createMetadataEdition(
-                name(),
+                name,
                 description,
-                imageUrl,
+                _tokenURI(tokenId),
                 animationUrl,
                 tokenId,
-                editionSize
+               dropSize 
             );
     }
 
     function supportsInterface(bytes4 interfaceId)
         public
-        view
-        override(ERC721Upgradeable, IERC165Upgradeable)
+        pure
         returns (bool)
     {
         return
-            type(IERC2981Upgradeable).interfaceId == interfaceId ||
-            ERC721Upgradeable.supportsInterface(interfaceId);
+            type(IERC2981).interfaceId == interfaceId ||
+            type(IERC721).interfaceId == interfaceId ||
+            type(IEditionSingleMintable).interfaceId == interfaceId;
     }
 }
