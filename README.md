@@ -1,55 +1,29 @@
-# Zora NFT Editions
+# on-chain generative nft edition drop
 
 ### What are these contracts?
-1. `SingleEditionMintable`
-   Each edition is a unique contract.
-   This allows for easy royalty collection, clear ownership of the collection, and your own contract 🎉
-2. `SingleEditionMintableCreator`
-   Gas-optimized factory contract allowing you to easily + for a low gas transaction create your own edition mintable contract.
-3. `SharedNFTLogic`
-   Contract that includes dynamic metadata generation for your editions removing the need for a centralized server.
-   imageUrl and animationUrl can be base64-encoded data-uris for these contracts totally removing the need for IPFS
+1. `OnChainGenerativeEditionDrop`
+This contract allows creating gas-optimized generative projects.
+A data-uri can be encoded for svg or html projects if desired, or linked to IPFS or a centralized server.
+
+Base NFT contract information is and metadata rendering methods are already deployed on ethereum mainnet as standardized Zora libraries
 
 ### How do I create a new contract?
 
 ### Directly on the blockchain:
-1. Find/Deploy the `SingleEditionMintableCreator` contract
-2. Call `createEdition` on the `SingleEditionMintableCreator`
+1. Update all constants within the `GenerativeEditionDrop` contract
+2. Set contracts for `SharedNFTLogic` and `ERC721Base` to your desired network from the respective readmes in `hardhat.config.js`
+3. Deploy on rinkeby with hardhat `hardhat deploy --network rinkeby`
+3. Deploy on mainnet with hardhat `hardhat deploy --network mainnet`
 
-### Through a GUI:
+### Manage or mint these contracts through a GUI:
 
-Rinkeby: https://edition-drop.vercel.app/?network=1
+Rinkeby: https://edition-drop.vercel.app/manage/{CONTRACT_ADDRESS}/manage/?network=1
 
-Mainnet: https://edition-drop.vercel.app/?network=4
+Mainnet: https://edition-drop.vercel.app/manage/{CONTRACT_ADDRESS}?network=4
 
-Polygon: https://edition-drop.vercel.app/?network=137
+Polygon: https://edition-drop.vercel.app/manage/{CONTRACT_ADDRESS}?network=137
 
-Mumbai: https://edition-drop.vercel.app/?network=80001
-
-
-### Where is the factory contract deployed:
-
-**Mainnet ETH**: [0x91A8713155758d410DFAc33a63E193AE3E89F909](https://etherscan.io/address/0x91A8713155758d410DFAc33a63E193AE3E89F909)
-
-**Rinkeby**: [0x85FaDB8Debc0CED38d0647329fC09143d01Af660](https://rinkeby.etherscan.io/address/0x85FaDB8Debc0CED38d0647329fC09143d01Af660)
-
-**Polygon**: [0x4500590AfC7f12575d613457aF01F06b1eEE57a3](https://polygonscan.com/address/0x4500590AfC7f12575d613457aF01F06b1eEE57a3)
-
-**Mumbai**: [0x773E5B82179E6CE1CdF8c5C0d736e797b3ceDDDC](https://mumbai.polygonscan.com/address/0x773E5B82179E6CE1CdF8c5C0d736e797b3ceDDDC)
-
-### How do I create a new edition?
-
-call `createEdition` with the given arguments to create a new editions contract:
-
-- Name: Token Name Symbol (shows in etherscan)
-- Symbol: Symbol of the Token (shows in etherscan)
-- Description: Description of the Token (shows in the NFT description)
-- Animation URL: IPFS/Arweave URL of the animation (video, webpage, audio, etc)
-- Animation Hash: sha-256 hash of the animation, 0x0 if no animation url provided
-- Image URL: IPFS/Arweave URL of the image (image/, gifs are good for previewing images)
-- Image Hash: sha-256 hash of the image, 0x0 if no image url provided
-- Edition Size: Number of this edition, if set to 0 edition is not capped/limited
-- BPS Royalty: 500 = 5%, 1000 = 10%, so on and so forth, set to 0 for no on-chain royalty (not supported by all marketplaces)
+Mumbai: https://edition-drop.vercel.app/manage/{CONTRACT_ADDRESS}?network=80001
 
 ### How do I sell/distribute editions?
 
@@ -68,27 +42,12 @@ Now that you have a edition, there are multiple options for lazy-minting and sal
 * Supports tracking unique parts (edition 1 vs 24 may have different pricing implications) of editions
 * Supports free public minting (by approving the 0x0 (zeroaddress) to mint)
 * Supports smart-contract based minting (by approving the custom minting smart contract) using an interface.
-* All metadata is stored/generated on-chain -- only image/video assets are stored off-chain
+* All metadata is stored/generated on-chain
 * Permissionless and open-source
 * Simple integrated ethereum-based sales, can be easily extended with custom interface code
 
-### Potential use cases for these contracts:
-
-* Giveaways for events showing if you’ve attended 
-* Serial editioned artworks that can be sold in the Zora auction house / work in any ERC721 market
-* Fundraisers for fixed-eth amounts
-* Can be used to issue tokens in response for contributing to a fundraiser
-* Tickets/access tokens allowing holders to access a discord or mint
-
-### Deploying:
-(Replace network with desired network)
-
-`hardhat deploy --network rinkeby`
 
 ### Verifying:
 
 `hardhat sourcify --network rinkeby && hardhat etherscan-verify --network rinkeby`
 
-### Bug Bounty
-5 ETH for any critical bugs that could result in loss of funds.
-Rewards will be given for smaller bugs or ideas.
